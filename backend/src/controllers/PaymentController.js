@@ -52,11 +52,9 @@ class PaymentController {
                 console.log('Handling checkout.session.completed');
 
                 const session = event.data.object;
-                console.log('Session data:', session);  // Log the session data
 
                 // Find the payment using the session ID
                 const payment = await Payment.findOne({ sessionId: session.id });
-                console.log('Payment found:', payment);  // Log the payment found
 
                 if (payment) {
                     // Update the payment status to 'paid'
@@ -69,7 +67,6 @@ class PaymentController {
                 console.log('Handling checkout.session.async_payment_failed');
 
                 const failedSession = event.data.object;
-                console.log('Failed session data:', failedSession);  // Log the failed session data
 
                 // Find the payment using the session ID
                 const failedPayment = await Payment.findOne({ sessionId: failedSession.id });
@@ -95,11 +92,9 @@ class PaymentController {
         }
     }
 
-
-
     async getPayments(req, res) {
         try {
-            const payments = await Payment.find().populate('projectId', 'name amount');
+            const payments = await Payment.find().populate('projectId', 'name amount').sort({ updatedAt: -1 });
             res.status(200).json({ payments });
         } catch (error) {
             res.status(500).json({ message: error.message });
