@@ -6,6 +6,12 @@ import axios from 'axios';
 import useAuthStore from './store/authStore';
 import { useEffect } from 'react';
 import { ToastContainer } from 'react-toastify';
+import Dashboard from './pages/Dashboard';
+import PaymentsList from './pages/PaymentList';
+import AddProjectForm from './pages/AddProjectForm';
+import ProjectList from './pages/ProjectList';
+import EditProjectForm from './pages/EditProjectForm';
+import ProtectedRoute from './components/ProtectedRoute';
 
 function App() {
   const { login, logout } = useAuthStore();
@@ -40,6 +46,11 @@ function App() {
         <Header />
         <main className="flex-grow container mx-auto px-4 py-6">
           <Routes>
+            <Route path="/" element={<ProtectedRoute> <Dashboard /></ProtectedRoute>} />
+            <Route path="/payment-list" element={<ProtectedRoute> <PaymentsList /></ProtectedRoute>} />
+            <Route path="/add-project" element={<ProtectedRoute> <AddProjectForm /></ProtectedRoute>} />
+            <Route path="/edit-project/:projectId" element={<ProtectedRoute> <EditProjectForm /></ProtectedRoute>} />
+            <Route path="/project" element={<ProtectedRoute> <ProjectList /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
           </Routes>
