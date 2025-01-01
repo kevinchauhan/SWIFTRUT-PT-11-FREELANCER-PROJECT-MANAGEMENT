@@ -44,80 +44,63 @@ class PaymentController {
         console.log('Webhook received');
 
         const sig = req.headers['stripe-signature'];
-        if (!sig) {
-            console.error('No Stripe signature found in request headers');
-            return res.status(400).send('Webhook error: No Stripe signature found');
-        }
 
         try {
             const body = await buffer(req);
-            console.log('Received body:', body.toString());  // Debugging raw request body
+            console.log('Received body:', body.toString());  // Log the raw request body
 
             // Verify webhook signature and construct the event
-            event = stripe.webhooks.constructEvent(body, sig, Config.STRIPE_WEBHOOK_SECRET);
-            console.log('Stripe event constructed successfully'); construction
-        } catch (err) {
-            console.error('Error in webhook signature verification or event construction:', err);
-            return res.status(400).send(`Webhook error: ${err.message}`);
-        }
+            const event = stripe.webhooks.constructEvent(body, sig, Config.STRIPE_WEBHOOK_SECRET);
+            console.log('Stripe event constructed successfully');  // Log when event is successfully constructed
 
-        // Handle the event based on type
-        switch (event.type) {
-            case 'checkout.session.completed':
+            // Handle the event based on type
+            if (event.type === 'checkout.session.completed') {
                 console.log('Handling checkout.session.completed');
 
                 const session = event.data.object;
-                console.log('Session data:', session);  // Debugging the session data
+                console.log('Session data:', session);  // Log the session data
 
-                try {
-                    // Find the payment using the session ID
-                    const payment = await Payment.findOne({ sessionId: session.id });
-                    if (payment) {
-                        console.log('Payment found:', payment);  // Debugging the payment
-                        // Update the payment status to 'paid'
-                        payment.status = 'paid';
-                        await payment.save();
-                        console.log('Payment status updated to paid');
-                    } else {
-                        console.error('Payment not found for session ID:', session.id);
-                    }
-                } catch (err) {
-                    console.error('Error finding or updating payment:', err);
+                // Find the payment using the session ID
+                const payment = await Payment.findOne({ sessionId: session.id });
+                console.log('Payment found:', payment);  // Log the payment found
+
+                if (payment) {
+                    // Update the payment status to 'paid'
+                    payment.status = 'paid';
+                    await payment.save();
+                    console.log('Payment status updated to paid');
                 }
-                break;
 
-            case 'checkout.session.async_payment_failed':
-                console.log('Handling checkout.session.async_payment_failed'); type
+            } else if (event.type === 'checkout.session.async_payment_failed') {
+                console.log('Handling checkout.session.async_payment_failed');
 
                 const failedSession = event.data.object;
-                console.log('Failed session data:', failedSession);  // Debugging the failed session
+                console.log('Failed session data:', failedSession);  // Log the failed session data
 
-                try {
-                    // Find the payment using the session ID
-                    const failedPayment = await Payment.findOne({ sessionId: failedSession.id });
-                    if (failedPayment) {
-                        console.log('Failed payment found:', failedPayment);  // Debugging the failed payment
-                        // Update the payment status to 'unpaid'
-                        failedPayment.status = 'unpaid';
-                        await failedPayment.save();
-                        console.log('Payment status updated to unpaid');
-                    } else {
-                        console.error('Failed payment not found for session ID:', failedSession.id);
-                    }
-                } catch (err) {
-                    console.error('Error finding or updating failed payment:', err);
+                // Find the payment using the session ID
+                const failedPayment = await Payment.findOne({ sessionId: failedSession.id });
+                console.log('Failed payment found:', failedPayment);  // Log the failed payment found
+
+                if (failedPayment) {
+                    // Update the payment status to 'unpaid'
+                    failedPayment.status = 'unpaid';
+                    await failedPayment.save();
+                    console.log('Payment status updated to unpaid');
                 }
-                break;
+            } else {
+                console.log(`Unhandled event type ${event.type}`);  // Log any unhandled event types
+            }
 
-            // Handle other event types if necessary
-            default:
-                console.log(`Unhandled event type ${event.type}`);
+            // Return a 200 response to acknowledge receipt of the event
+            console.log('Returning success response');
+            res.status(200).json({ received: true });
+
+        } catch (err) {
+            console.error('Error in webhook handling:', err);
+            return res.status(400).send(`Webhook error: ${err.message}`);
         }
-
-        // Return a 200 response to acknowledge receipt of the event
-        console.log('Returning success response');
-        res.status(200).json({ received: true });
     }
+
 
 
     async getPayments(req, res) {
