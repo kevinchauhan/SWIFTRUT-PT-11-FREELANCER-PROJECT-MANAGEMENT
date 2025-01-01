@@ -43,16 +43,10 @@ class PaymentController {
     async webhookHandler(req, res) {
         console.log('Webhook received');
 
-        const sig = req.headers['stripe-signature'];
 
         try {
-            const body = await buffer(req);
-            console.log('Received body:', body.toString());  // Log the raw request body
-
-            // Verify webhook signature and construct the event
-            const event = stripe.webhooks.constructEvent(body, sig, Config.STRIPE_WEBHOOK_SECRET);
-            console.log('Stripe event constructed successfully');  // Log when event is successfully constructed
-
+            const event = req.body
+            console.log('req-body', req.body)
             // Handle the event based on type
             if (event.type === 'checkout.session.completed') {
                 console.log('Handling checkout.session.completed');
