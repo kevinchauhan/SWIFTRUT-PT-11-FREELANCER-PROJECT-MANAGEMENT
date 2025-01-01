@@ -9,6 +9,10 @@ const projectSchema = new mongoose.Schema({
         type: Date,
         required: true,
     },
+    amount: {
+        type: Number,
+        required: true,
+    },
     status: {
         type: String,
         enum: ['active', 'completed'],
